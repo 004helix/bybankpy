@@ -8,6 +8,7 @@ import requests.utils
 import requests
 import struct
 import json
+import copy
 
 REALMS = {
 	'BY': {
@@ -19,19 +20,30 @@ REALMS = {
 class GateResult:
 	operation = None
 	service = None
-	header = {}
-	fields = []
+	_data = {}
 
-	def __str__(self):
-		data = { 'operationType': '%s:%s' % (self.service, self.operation) }
-		if len(self.header) > 0:
-			data['header'] = self.header
-		if len(self.fields) > 0:
-			data['fields'] = self.fields
-		return repr(data)
-	
-	def __repr__(self):
-		return str(self)
+	def __init__(self, data):
+
+		if type(data) != dict:
+			raise Exception('Bad data')
+
+		self._data = copy.deepcopy(data)
+
+		if 'operationId' in self._data:
+			opid = self._data['operationId']
+			del self._data['operationId']
+
+			if ':' in opid:
+				(self.service, self.operation) = opid.split(':', 1)
+			else:
+				self.service = opid
+
+		return
+
+	def __getattr__(self, name):
+		if name not in self._data:
+			raise Exception('Unknown field: %s' % name)
+		return self._data[name]
 
 class alfa:
 
@@ -191,29 +203,14 @@ class alfa:
 		if len(params) > 0:
 			request['parameters'] = params
 
-		raw = self._gate(service, request)
+		result = GateResult(self._gate(service, request))
 
-		result = GateResult()
-
-		if 'operationId' in raw and raw['operationId'] == 'Exception':
-			exc = u'%s: %s' % (raw['header']['faultCode'], raw['header']['faultMessage'])
+		if result.service == 'Exception':
+			exc = u'%s: %s' % (result.header['faultCode'], result.header['faultMessage'])
 			raise Exception(exc.encode('utf-8'))
 
-		if 'operationId' in raw:
-			(reply_service, reply_operation) = raw['operationId'].split(':')
-
-			if reply_service != service:
-				raise Exception('Unknown service %s' % reply_service)
-
-			result.operation = reply_operation
-
-		if 'header' in raw:
-			result.header = raw['header']
-
-		if 'fields' in raw:
-			result.fields = raw['fields']
-
-		result.service = service
+		if result.service != service:
+			raise Exception('Unknown service %s' % result.service)
 
 		return result
 

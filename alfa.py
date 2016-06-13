@@ -330,7 +330,7 @@ class alfa:
 
 	# cached version of summary (only accounts)
 	def get_accounts(self):
-		return self.gate('Budget', 'GetAccounts').fields
+		return self.gate('Budget', 'GetAccounts').fields[0]['value']
 
 	# cached version of summary (accounts, credits and deposits, but no difference between them)
 	def get_common_accounts(self):
@@ -338,4 +338,4 @@ class alfa:
 
 	# cards list
 	def get_cards(self):
-		return self.gate('CustomerCards', 'GetCardsList').fields
+		return self.gate('CustomerCards', 'GetCardsList').fields[0]['value']

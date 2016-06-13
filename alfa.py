@@ -288,7 +288,7 @@ class alfa:
 
 		repl = lxml.objectify.fromstring(self._ctrl(0x0d, request))
 
-		opid = str(reply.fs.attrib.get('o'))
+		opid = str(repl.fs.attrib.get('o'))
 
 		flds = {}
 
@@ -310,7 +310,7 @@ class alfa:
 
 		repl = lxml.objectify.fromstring(self._ctrl(0x0d, request))
 
-		opid = str(reply.fs.attrib.get('o'))
+		opid = str(repl.fs.attrib.get('o'))
 
 		flds = {}
 

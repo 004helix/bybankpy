@@ -336,6 +336,6 @@ class alfa:
 	def get_common_accounts(self):
 		return self.gate('Budget', 'GetCommonAccounts', {"operation": "mainPage"}).accounts
 
-	# cards list
+	# cards list (cached)
 	def get_cards(self):
 		return self.gate('CustomerCards', 'GetCardsList').fields[0]['value']

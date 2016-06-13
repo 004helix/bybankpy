@@ -99,6 +99,7 @@ class alfa:
 
 		return
 
+	# low-level gate interface
 	def _gate(self, service, request):
 		url = self.gate_url
 		if self.sessid is not None:
@@ -118,6 +119,7 @@ class alfa:
 
 		return r.json()
 
+	# low-level ControllerServlet interface
 	def _ctrl(self, command, *args):
 		url = self.ctrl_url
 		if self.sessid is not None:
@@ -182,7 +184,40 @@ class alfa:
 
 		return str(c[2:2 + size])
 
-	# non-cached
+	# high-level gate interface
+	def gate(self, service, operation, params = {}):
+		request = { 'operationId': '%s:%s' % (service, operation) }
+
+		if len(params) > 0:
+			request['parameters'] = params
+
+		raw = self._gate(service, request)
+
+		result = GateResult()
+
+		if 'operationId' in raw and raw['operationId'] == 'Exception':
+			exc = u'%s: %s' % (raw['header']['faultCode'], raw['header']['faultMessage'])
+			raise Exception(exc.encode('utf-8'))
+
+		if 'operationId' in raw:
+			(reply_service, reply_operation) = raw['operationId'].split(':')
+
+			if reply_service != service:
+				raise Exception('Unknown service %s' % reply_service)
+
+			result.operation = reply_operation
+
+		if 'header' in raw:
+			result.header = raw['header']
+
+		if 'fields' in raw:
+			result.fields = raw['fields']
+
+		result.service = service
+
+		return result
+
+	# non-cached accounts / credits / deposits summary
 	def summary(self):
 		d = lxml.objectify.fromstring(self._ctrl(0x03))
 
@@ -274,35 +309,3 @@ class alfa:
 		           (str(op), str(f1), str(f4), str(f2))
 
 		return self._ctrl(0x0e, request)
-
-	def gate(self, service, operation, params = {}):
-		request = { 'operationId': '%s:%s' % (service, operation) }
-
-		if len(params) > 0:
-			request['parameters'] = params
-
-		raw = self._gate(service, request)
-
-		result = GateResult()
-
-		if 'operationId' in raw and raw['operationId'] == 'Exception':
-			exc = u'%s: %s' % (raw['header']['faultCode'], raw['header']['faultMessage'])
-			raise Exception(exc.encode('utf-8'))
-
-		if 'operationId' in raw:
-			(reply_service, reply_operation) = raw['operationId'].split(':')
-
-			if reply_service != service:
-				raise Exception('Unknown service %s' % reply_service)
-
-			result.operation = reply_operation
-
-		if 'header' in raw:
-			result.header = raw['header']
-
-		if 'fields' in raw:
-			result.fields = raw['fields']
-
-		result.service = service
-
-		return result

@@ -41,9 +41,9 @@ class GateResult:
 		return
 
 	def __getattr__(self, name):
-		if name not in self._data:
-			raise Exception('Unknown field: %s' % name)
-		return self._data[name]
+		if name in self._data:
+			return self._data[name]
+		return self.__getattribute__(name)
 
 class alfa:
 

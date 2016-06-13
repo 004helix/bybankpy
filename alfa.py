@@ -4,10 +4,10 @@
 #
 
 import lxml.objectify
+import requests.utils
 import requests
 import struct
 import json
-import re
 
 REALMS = {
 	'BY': {
@@ -35,9 +35,10 @@ class GateResult:
 
 class alfa:
 
-	platform_name = 'Android'
-	platform_ver  = 'Android22'
-	client_ver    = '7.1.3'
+	os_name       = 'Android'
+	os_version    = '22'
+	device_name   = 'Android'
+	app_version   = '7.2.0'
 	lang          = 'ru'
 	agent         = 'okhttp/2.6.0'
 
@@ -48,8 +49,8 @@ class alfa:
 	sessid        = None
 
 	def __getstate__(self):
-		attrs = ['platform_name', 'platform_ver', 'client_ver', 'lang',
-		         'agent', 'sess', 'ctrl_url', 'gate_url', 'sessid']
+		attrs = ['os_name', 'os_version', 'device_name', 'app_version',
+		         'lang', 'agent', 'sess', 'ctrl_url', 'gate_url', 'sessid']
 		return dict((attr, getattr(self, attr)) for attr in attrs)
 
 	def __setstate__(self, state):
@@ -68,11 +69,27 @@ class alfa:
 		self.sess.headers['User-Agent'] = self.agent
 
 		if login is not None and passwd is not None:
-			c = self._ctrl(1, login, passwd, '', self.platform_ver,
-			               self.platform_name, self.client_ver, self.lang)
+			params = {
+				'appVersion':             self.app_version,
+				'deviceName':             self.device_name,
+				'login':                  login,
+				'loginType':              'password',
+				'operationSystem':        self.os_name,
+				'operationSystemVersion': self.os_version,
+				'password':               passwd
+			}
 
-			m = re.search(r";jsessionid=(.*?)$", c)
-			self.sessid = str(m.group(1))
+			result = self.gate('Authorization', 'Login', params)
+
+			if 'status' not in result.header or result.header['status'] != 'STATUS_OK':
+				raise Exception('Cant login')
+
+			cookies = requests.utils.dict_from_cookiejar(self.sess.cookies)
+
+			if 'JSESSIONID' not in cookies:
+				raise Exception('Cant login: JSESSIONID not found')
+
+			self.sessid = cookies['JSESSIONID']
 
 		elif sessid is not None:
 			self.sessid = sessid
@@ -115,7 +132,7 @@ class alfa:
 				req += struct.pack('>H', len(arg))
 				req += arg
 
-		# login / logout
+		# login / logout (old)
 		if command == 1 or command == 2:
 			req += '\x00'
 
@@ -164,49 +181,6 @@ class alfa:
 		(size,) = struct.unpack('>H', c[:2])
 
 		return str(c[2:2 + size])
-
-#	def close(self):
-#		# response = self._ctrl(0x02)
-#		self.sessid = None
-#		return response
-
-#	def _gate_list(self, op_req, op_reply, field_name):
-#		values = []
-#
-#		reply = self._gate({
-#			'operationId': op_req,
-#			'parameters': {}
-#		})
-#
-#		if 'operationId' in reply and \
-#		   reply['operationId'] == 'Exception':
-#			raise Exception(str(reply['faultCode']))
-#
-#		if 'fields' not in reply or \
-#		   'operationId' not in reply or \
-#		   reply['operationId'] != op_reply:
-#			raise Exception('Bad response')
-#
-#		for field in reply['fields']:
-#			if field['name'] != field_name:
-#				continue
-#			if field['type'] != 'List':
-#				raise Exception('Bad response: field not a list')
-#			values += field['value']
-#
-#		return values
-
-#	# cached after login forever
-#	def accounts(self):
-#		return self._gate_list('Budget:GetAccounts',
-#		                       'Budget:GetAccountsResult',
-#		                       'accounts')
-
-#	# cached ?
-#	def cards(self):
-#		return self._gate_list('CustomerCards:GetCardsList',
-#		                       'CustomerCards:CardsList',
-#		                       'customer-cards')
 
 	# non-cached
 	def summary(self):

@@ -276,6 +276,8 @@ class alfa:
 
 		return info
 
+	# warning: uses cached balance for all accounts,
+	# you need to relogin to make sure transfer succeded
 	def transfer(self, fromid, toid, amount, currency):
 		form = self._ctrl(0x11)
 
@@ -298,6 +300,8 @@ class alfa:
 
 		return self._ctrl(0x0e, request)
 
+	# warning: uses cached balance for all accounts,
+	# you need to relogin to make sure exchange succeded
 	def exchange(self, fromid, toid, amount, currency):
 		form = self._ctrl(0x12, '<d>120</d>')
 
@@ -319,3 +323,19 @@ class alfa:
 		           (opid, flds['f1'], flds['f2'])
 
 		return self._ctrl(0x0e, request)
+
+	# client info
+	def client_info(self):
+		return self.gate('ClientInfo', 'GetName').header
+
+	# cached version of summary (only accounts)
+	def get_accounts(self):
+		return self.gate('Budget', 'GetAccounts').fields
+
+	# cached version of summary (accounts, credits and deposits, but no difference between them)
+	def get_common_accounts(self):
+		return self.gate('Budget', 'GetCommonAccounts', {"operation": "mainPage"}).accounts
+
+	# cards list
+	def get_cards(self):
+		return self.gate('CustomerCards', 'GetCardsList').fields

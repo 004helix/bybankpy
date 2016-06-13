@@ -283,29 +283,42 @@ class alfa:
 		form = self._ctrl(0x11)
 
 		request = "<?xml version='1.0' ?>"
-		request += '<d o="336"><f1>%s</f1><f4>%s</f4><f2>%s</f2><f3>%s</f3></d>' % \
-		           (str(fromid), str(currency), str(toid), str(amount))
+		request += '<d o="336"><f1>%s</f1><f2>%s</f2><f3>%s</f3><f4>%s</f4></d>' % \
+		           (str(fromid), str(toid), str(amount), str(currency))
 
-		reply = lxml.objectify.fromstring(self._ctrl(0x0d, request))
+		repl = lxml.objectify.fromstring(self._ctrl(0x0d, request))
 
-		op = reply.fs.attrib.get('o')
+		opid = str(reply.fs.attrib.get('o'))
 
-		f1 = None
-		f2 = None
-		f4 = None
+		flds = {}
 
-		for f in reply.fs.f:
-			fn = f.attrib.get('n')
-
-			if fn == 'f1':
-				f1 = f.v
-			elif fn == 'f2':
-				f2 = f.v
-			elif fn == 'f4':
-				f4 = f.v
+		for f in repl.fs.f:
+			flds[str(f.attrib.get('n'))] = str(f.v)
 
 		request = "<?xml version='1.0' ?>"
-		request += '<d o="%s"><f1>%s</f1><f4>%s<f4><f2>%s</f2></d>' % \
-		           (str(op), str(f1), str(f4), str(f2))
+		request += '<d o="%s"><f1>%s</f1><f2>%s<f2><f4>%s</f4></d>' % \
+		           (opid, flds['f1'], flds['f2'], flds['f4'])
+
+		return self._ctrl(0x0e, request)
+
+	def exchange(self, fromid, toid, amount, currency):
+		form = self._ctrl(0x12, '<d>120</d>')
+
+		request = "<?xml version='1.0' ?>"
+		request += '<d o="313"><f1>%s</f1><f2>%s</f2><f3>%s</f3><f4>%s</f4></d>' % \
+		           (str(fromid), str(toid), str(amount), str(currency))
+
+		repl = lxml.objectify.fromstring(self._ctrl(0x0d, request))
+
+		opid = str(reply.fs.attrib.get('o'))
+
+		flds = {}
+
+		for f in repl.fs.f:
+			flds[str(f.attrib.get('n'))] = str(f.v)
+
+		request = "<?xml version='1.0' ?>"
+		request += '<d o="%s"><f1>%s</f1><f2>%s</f2></d>' % \
+		           (opid, flds['f1'], flds['f2'])
 
 		return self._ctrl(0x0e, request)

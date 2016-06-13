@@ -43,7 +43,7 @@ class GateResult:
 	def __getattr__(self, name):
 		if name in self._data:
 			return self._data[name]
-		return self.__getattribute__(name)
+		raise AttributeError, name
 
 class alfa:
 

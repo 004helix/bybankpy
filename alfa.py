@@ -14,6 +14,10 @@ REALMS = {
 	'BY': {
 		'ctrl': 'https://click.alfa-bank.by/5mobile/ControllerServlet',
 		'gate': 'https://click.alfa-bank.by/5mobile/gate'
+	},
+	'RU': {
+		'ctrl': 'https://alfa-mobile.alfabank.ru/ALFAJMB/ControllerServlet',
+		'gate': 'https://alfa-mobile.alfabank.ru/ALFAJMB/gate'
 	}
 }
 
@@ -45,6 +49,9 @@ class GateResult:
 			return self._data[name]
 		raise AttributeError, name
 
+class AlfaException(Exception):
+	pass
+
 class alfa:
 
 	os_name       = 'Android'
@@ -72,7 +79,7 @@ class alfa:
 	def __init__(self, realm, login = None, passwd = None, sessid = None):
 
 		if realm not in REALMS:
-			raise Exception('Unknown realm ' + realm)
+			raise AlfaException('Unknown realm ' + realm)
 
 		self.ctrl_url = REALMS[realm]['ctrl']
 		self.gate_url = REALMS[realm]['gate']
@@ -93,13 +100,17 @@ class alfa:
 
 			result = self.gate('Authorization', 'Login', params)
 
-			if 'status' not in result.header or result.header['status'] != 'STATUS_OK':
-				raise Exception('Cant login')
+			if 'status' not in result.header:
+				raise AlfaException('Cant login')
+
+			if result.header['status'] != 'STATUS_OK':
+				exc = u'Cant login: ' + result.header['status']
+				raise AlfaException(exc.encode('utf-8'))
 
 			cookies = requests.utils.dict_from_cookiejar(self.sess.cookies)
 
 			if 'JSESSIONID' not in cookies:
-				raise Exception('Cant login: JSESSIONID not found')
+				raise AlfaException('Cant login: JSESSIONID not found')
 
 			self.sessid = cookies['JSESSIONID']
 
@@ -107,7 +118,7 @@ class alfa:
 			self.sessid = sessid
 
 		else:
-			raise Exception('You must set login/passwd pair or session id')
+			raise AlfaException('You must set login/passwd pair or session id')
 
 		return
 
@@ -162,7 +173,7 @@ class alfa:
 
 		# check and parse reply
 		if len(c) < 4:
-			raise Exception('Reply too small')
+			raise AlfaException('Reply too small')
 
 		(retval,) = struct.unpack('>I', c[:4])
 		c = c[4:]
@@ -186,7 +197,7 @@ class alfa:
 			if command == 2:
 				return msg
 			else:
-				raise Exception(msg)
+				raise AlfaException(msg)
 
 		# login
 		if command == 1:
@@ -207,10 +218,10 @@ class alfa:
 
 		if result.service == 'Exception':
 			exc = u'%s: %s' % (result.header['faultCode'], result.header['faultMessage'])
-			raise Exception(exc.encode('utf-8'))
+			raise AlfaException(exc.encode('utf-8'))
 
 		if result.service != service:
-			raise Exception('Unknown service %s' % result.service)
+			raise AlfaException('Unknown service %s' % result.service)
 
 		return result
 

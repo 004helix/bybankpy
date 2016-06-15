@@ -271,6 +271,7 @@ class alfa:
 
 		return summary
 
+	# old credit info (uses ControllerServlet)
 	def credit_info(self, number):
 		request = "<?xml version='1.0' ?>"
 		request += '<d><f>%s</f></d>' % str(number)
@@ -281,7 +282,7 @@ class alfa:
 
 		for f in d.c.r.f:
 			info.append({
-				'description': unicode(f.attrib.get('t')),
+				'name': unicode(f.attrib.get('t')),
 				'value': unicode(f)
 			})
 
@@ -339,6 +340,10 @@ class alfa:
 	def client_info(self):
 		return self.gate('ClientInfo', 'GetName').header
 
+	# cards list (cached)
+	def get_cards(self):
+		return self.gate('CustomerCards', 'GetCardsList').fields[0]['value']
+
 	# cached version of summary (only accounts)
 	def get_accounts(self):
 		return self.gate('Budget', 'GetAccounts').fields[0]['value']
@@ -347,6 +352,23 @@ class alfa:
 	def get_common_accounts(self):
 		return self.gate('Budget', 'GetCommonAccounts', {"operation": "mainPage"}).accounts
 
-	# cards list (cached)
-	def get_cards(self):
-		return self.gate('CustomerCards', 'GetCardsList').fields[0]['value']
+	# get account details (account, credit, deposit)
+	def account_info(self, number):
+		details = self.gate('Budget', 'GetAccountDetails', {"account": number})
+
+		tr = {
+			'account':     'account',
+			'accountInfo': 'accountInfoArray',
+			'accountData': 'accountData',
+			'depositInfo': 'depositInfoArray',
+			'depositData': 'depositData',
+		}
+
+		info = {}
+		for k, v in tr.iteritems():
+			try:
+				info[k] = getattr(details, v)
+			except AttributeError:
+				pass
+
+		return info

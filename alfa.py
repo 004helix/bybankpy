@@ -372,3 +372,7 @@ class alfa:
 				pass
 
 		return info
+
+	# get offers
+	def get_offers(self):
+		return self.gate('Offers', 'GetOffersList').offers

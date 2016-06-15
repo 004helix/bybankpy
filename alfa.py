@@ -236,37 +236,37 @@ class alfa:
 		}
 
 		if len(d.c) > 0:
-			for r in d.c[0].r:
+			for r in d.c[0].iter('r'):
 				(amount, currency, ) = str(r.f[2]).split()
 				summary['accounts'].append({
-					'id': r.attrib.get('pk'),
+					'id': str(r.attrib.get('pk')),
 					'description': unicode(r.f[0]),
 					'number': str(r.f[1]),
 					'amount': amount,
-					'currency': currency,
+					'currency': currency
 				})
 
 		if len(d.c) > 1:
-			for r in d.c[1].r:
+			for r in d.c[1].iter('r'):
 				(amount, currency, ) = str(r.f[3]).split()
 				summary['credits'].append({
-					'id': r.attrib.get('pk'),
+					'id': str(r.attrib.get('pk')),
 					'description': unicode(r.f[0]),
 					'number': str(r.f[1]),
 					'amount': amount,
 					'currency': currency,
-					'contract': str(r.f[2]),
+					'contractDate': str(r.f[2])
 				})
 
 		if len(d.c) > 2:
-			for r in d.c[2].r:
+			for r in d.c[2].iter('r'):
 				(amount, currency, ) = str(r.f[2]).split()
 				summary['deposits'].append({
-					'id': r.attrib.get('pk'),
+					'id': str(r.attrib.get('pk')),
 					'description': unicode(r.f[0]),
 					'number': str(r.f[1]),
 					'amount': amount,
-					'currency': currency,
+					'currency': currency
 				})
 
 		return summary

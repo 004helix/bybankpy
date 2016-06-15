@@ -344,6 +344,10 @@ class alfa:
 	def get_cards(self):
 		return self.gate('CustomerCards', 'GetCardsList').fields[0]['value']
 
+	# get offers
+	def get_offers(self):
+		return self.gate('Offers', 'GetOffersList').offers
+
 	# cached version of summary (only accounts)
 	def get_accounts(self):
 		return self.gate('Budget', 'GetAccounts').fields[0]['value']
@@ -372,7 +376,3 @@ class alfa:
 				pass
 
 		return info
-
-	# get offers
-	def get_offers(self):
-		return self.gate('Offers', 'GetOffersList').offers

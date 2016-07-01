@@ -57,7 +57,7 @@ class alfa:
 	os_name       = 'Android'
 	os_version    = '22'
 	device_name   = 'Android'
-	app_version   = '7.2.0'
+	app_version   = '7.3.0'
 	lang          = 'ru'
 	agent         = 'okhttp/2.6.0'
 

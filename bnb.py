@@ -145,4 +145,6 @@ class bnb:
 			)
 		])
 
-		return float(reply.Balance.Amount.text)
+		balance = str(reply.Balance.Amount.text)
+
+		return float(balance.replace(',', '.'))

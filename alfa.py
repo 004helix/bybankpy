@@ -235,16 +235,19 @@ class alfa:
 			'deposits': [],
 		}
 
-		if len(d.c) > 0:
-			for r in d.c[0].iter('r'):
+		depos = []
+
+		if len(d.c) > 2:
+			for r in d.c[2].iter('r'):
 				(amount, currency, ) = str(r.f[2]).split()
-				summary['accounts'].append({
+				summary['deposits'].append({
 					'id': str(r.attrib.get('pk')),
 					'description': unicode(r.f[0]),
 					'number': str(r.f[1]),
 					'amount': amount,
 					'currency': currency
 				})
+				depos.append(str(r.f[1]))
 
 		if len(d.c) > 1:
 			for r in d.c[1].iter('r'):
@@ -258,10 +261,12 @@ class alfa:
 					'contractDate': str(r.f[2])
 				})
 
-		if len(d.c) > 2:
-			for r in d.c[2].iter('r'):
+		if len(d.c) > 0:
+			for r in d.c[0].iter('r'):
+				if str(r.f[1]) in depos:
+					continue
 				(amount, currency, ) = str(r.f[2]).split()
-				summary['deposits'].append({
+				summary['accounts'].append({
 					'id': str(r.attrib.get('pk')),
 					'description': unicode(r.f[0]),
 					'number': str(r.f[1]),

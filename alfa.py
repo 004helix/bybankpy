@@ -137,7 +137,7 @@ class alfa:
 		                       'jmb-protocol-service': service,
 		                       'Content-Type': 'application/octet-stream'
 		                   },
-		                   timeout = (20, 60)
+		                   timeout = (30, 60)
 		)
 
 		return r.json()
@@ -166,7 +166,7 @@ class alfa:
 		                   headers = {
 		                       'Content-Type': 'application/octet-stream'
 		                   },
-		                   timeout = (20, 60)
+		                   timeout = (30, 60)
 		)
 
 		c = r.content

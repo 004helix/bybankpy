@@ -140,6 +140,8 @@ class alfa:
 		                   timeout = (30, 90)
 		)
 
+		r.raise_for_status()
+
 		return r.json()
 
 	# low-level ControllerServlet interface
@@ -168,6 +170,8 @@ class alfa:
 		                   },
 		                   timeout = (30, 90)
 		)
+
+		r.raise_for_status()
 
 		c = r.content
 

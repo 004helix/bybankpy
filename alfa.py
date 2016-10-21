@@ -9,6 +9,7 @@ import requests
 import struct
 import json
 import copy
+import time
 
 REALMS = {
 	'BY': {
@@ -57,7 +58,7 @@ class alfa:
 	os_name       = 'Android'
 	os_version    = '22'
 	device_name   = 'Android'
-	app_version   = '7.5.0'
+	app_version   = '7.7.0'
 	lang          = 'ru'
 	agent         = 'okhttp/2.6.0'
 
@@ -385,3 +386,50 @@ class alfa:
 				pass
 
 		return info
+
+	# get account statement
+	def account_statement(self, number):
+		request = "<?xml version='1.0' ?>"
+		request += '<d><f>%s</f></d>' % str(number)
+
+		d = lxml.objectify.fromstring(self._ctrl(0x04, request))
+
+		# format statement
+
+		info = {}
+
+		for r in d.c.iter('r'):
+			(amount, currency, ) = str(r.f[1]).split()
+			date = str(r.f[0])
+			key = date.replace('-','')
+			if key not in info:
+				info[key] = []
+			info[key].append({
+				'id': int(r.attrib.get('pk')),
+				'date': date,
+				'amount': amount,
+				'currency': currency,
+				'status': str(r.f[2]),
+				'desc': ''
+			})
+
+		# sort statement
+
+		statement = []
+
+		for day in sorted(info, key=int, reverse=True):
+			for i in sorted(info[day], key=lambda r: r['id'], reverse=True):
+				statement.append(i)
+
+		# load descriptions for last month
+
+		m = int(time.strftime("%Y%m01"))
+		for r in statement:
+			if int(r['date'].replace('-', '')) < m:
+				break
+			request = "<?xml version='1.0' ?>"
+			request += '<d><f>%s</f></d>' % str(r['id'])
+			d = lxml.objectify.fromstring(self._ctrl(0x0a, request))
+			r['desc'] = unicode(d.c.r.f[2])
+
+		return statement

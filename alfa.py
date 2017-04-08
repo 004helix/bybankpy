@@ -284,12 +284,12 @@ class alfa:
 
     # old credit info (uses ControllerServlet)
     def credit_info(self, number):
-        request = "<?xml version='1.0' ?>"
-        request += '<d><f>%s</f></d>' % str(number)
+        rq = "<?xml version='1.0' ?>"
+        rq += '<d><f>%s</f></d>' % str(number)
 
         info = []
 
-        d = lxml.objectify.fromstring(self._ctrl(0x10, request))
+        d = lxml.objectify.fromstring(self._ctrl(0x10, rq))
 
         for f in d.c.r.f:
             info.append({

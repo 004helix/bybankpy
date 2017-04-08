@@ -388,7 +388,7 @@ class alfa:
             except AttributeError:
                 pass
 
-    return info
+        return info
 
     # get account statement
     def account_statement(self, number):

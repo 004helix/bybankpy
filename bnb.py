@@ -47,7 +47,6 @@ class bnb:
                     self.E.Subsystem('ClientAuth'),
                 ]
             )
-            reply.raise_for_status()
             self.sessid = str(reply.Login.SID)
 
         elif sessid is not None:

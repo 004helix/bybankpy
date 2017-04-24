@@ -41,6 +41,7 @@ class client:
 
     def __setstate__(self, state):
         self.__dict__.update(state)
+        self.db = None
 
     def __init__(self, insyncdb_filename):
         self.db = gdbm.open(insyncdb_filename, 'w')

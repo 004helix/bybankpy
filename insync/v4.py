@@ -50,19 +50,25 @@ class client:
         self.sess.headers['X-Client-App'] = self.appname
         self.devid = self.db['uuid'].decode()
 
-    # low-level post interface
-    def _post(self, path, payload, params=None):
-        headers = {
-            'Content-Type': 'application/json; charset=UTF-8',
-        }
+    # low-level request interface
+    def _request(self, path, payload=None, params=None):
+        headers = {}
+
+        if payload is not None:
+            headers['Content-Type'] = 'application/json; charset=UTF-8'
 
         if self.sessid is not None:
             headers['X-Session-ID'] = self.sessid
 
         if self.debug:
-            print('REQUEST: %s %s' % (path, json.dumps(payload, indent=4)))
+            if payload is None:
+                print('REQUEST: .../%s' % (path,))
+            else:
+                print('REQUEST: .../%s %s' %
+                      (path, json.dumps(payload, indent=4)))
 
-        r = self.sess.post(
+        r = self.sess.request(
+            'GET' if payload is None else 'POST',
             self.url + path,
             json=payload,
             params=params,
@@ -79,7 +85,7 @@ class client:
 
     # check device status
     def check_device_status(self):
-        reply = self._post(
+        reply = self._request(
             'CheckDeviceStatus',
             {
                 'deviceId': self.devid,
@@ -108,7 +114,7 @@ class client:
         self.sessid = device['sessionId']
 
         # perform login
-        reply = self._post(
+        reply = self._request(
             'LoginByToken',
             {
                 'deviceId':  self.devid,
@@ -131,6 +137,10 @@ class client:
         self.db.close()
         self.db = None
 
+    # def logout interface
+    def logout(self):
+        return self._request('Logout')
+
     # auth interface
     def auth(self, **kwargs):
         request = {
@@ -148,7 +158,7 @@ class client:
 
         request.update(kwargs)
 
-        reply = self._post(
+        reply = self._request(
             'Authorization',
             request,
             {
@@ -165,7 +175,7 @@ class client:
 
     # auth confirm interface
     def auth_confirm(self, otp):
-        reply = self._post(
+        reply = self._request(
             'AuthorizationConfirm',
             {
                 'deviceId': self.devid,
@@ -189,7 +199,7 @@ class client:
         self.db.sync()
 
     def desktop(self):
-        return self._post('Desktop', {'deviceId': self.devid})
+        return self._request('Desktop', {'deviceId': self.devid})
 
     def history(self, **kwargs):
         '''
@@ -213,31 +223,31 @@ class client:
             'searchQuery': ''
         }
         args.update(kwargs)
-        return self._post('History', args)
+        return self._request('History', args)
 
     def products(self, product):
-        return self._post('Products', {'type': product})
+        return self._request('Products', {'type': product})
 
     def account_info(self, account_id):
-        return self._post('Account/Info', {
+        return self._request('Account/Info', {
             'id': account_id,
             'operationSource': 'SIDEMENU'
         })
 
     def deposit_info(self, deposit_id):
-        return self._post('Deposit/Info', {
+        return self._request('Deposit/Info', {
             'id': deposit_id,
             'operationSource': 'SIDEMENU'
         })
 
     def debit_card_info(self, debit_card_id):
-        return self._post('DebitCard/Info', {
+        return self._request('DebitCard/Info', {
             'id': debit_card_id,
             'operationSource': 'SIDEMENU'
         })
 
     def credit_card_info(self, credit_card_id):
-        return self._post('CreditCard/Info', {
+        return self._request('CreditCard/Info', {
             'id': credit_card_id,
             'operationSource': 'SIDEMENU'
         })

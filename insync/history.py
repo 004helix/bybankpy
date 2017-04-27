@@ -4,8 +4,9 @@
 #
 
 from __future__ import print_function, unicode_literals
-from builtins import str, bytes
 from six.moves import dbm_gnu as gdbm
+import six
+
 from datetime import datetime, timedelta
 import hashlib
 import json
@@ -45,11 +46,11 @@ class history:
         amount = self.get_amount(item)
 
         md5 = hashlib.md5()
-        md5.update(bytes(str(amount[0]), "utf-8"))  # amount
-        md5.update(bytes(str(amount[1]), "utf-8"))  # currency
-        md5.update(bytes(str(item['date']), "utf-8"))  # operation date
-        md5.update(bytes(str(item['description']), "utf-8"))  # account
-        md5.update(bytes(str(item['info']['description']), "utf-8"))
+        md5.update(amount[0].encode('utf-8'))  # amount
+        md5.update(amount[1].encode('utf-8'))  # currency
+        md5.update(item['date'].encode('utf-8'))  # operation date
+        md5.update(item['description'].encode('utf-8'))  # account
+        md5.update(item['info']['description'].encode('utf-8'))
 
         return md5.hexdigest()
 
@@ -58,8 +59,8 @@ class history:
         if icon in self.icons:
             if self.icons[icon] != transaction_type:
                 raise InsyncHistoryException(
-                    'Icon "%s" already used by transaction type "%s"' %
-                    (icon, self.icons[icon])
+                    'Icon "%s" already used by transaction type "%s"'
+                    % (icon, self.icons[icon])
                 )
         else:
             self.icons[icon] = transaction_type
@@ -211,7 +212,7 @@ class history:
             hist = self.insync.history(**args)
 
             for item in hist['items']:
-                if bytes(self.get_key(item), "utf-8") in self.db:
+                if six.b(self.get_key(item)) in self.db:
                     stop = True
                     break
                 items.append(item)

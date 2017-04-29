@@ -8,12 +8,12 @@ import lxml.builder
 import lxml.objectify
 import datetime
 import requests
-import time
 
 
-class bnb:
+class client:
     gate_url = 'https://bs.imbanking.by/mobile/xml_online'
     terminal = 'Android'
+    appver = '1.3.4'
 
     sessid = None
     sess = None
@@ -21,7 +21,7 @@ class bnb:
     E = None
 
     def __getstate__(self):
-        attrs = ['gate_url', 'terminal', 'sessid', 'sess']
+        attrs = ['gate_url', 'terminal', 'appver', 'sessid', 'sess']
         return dict((attr, getattr(self, attr)) for attr in attrs)
 
     def __setstate__(self, state):
@@ -61,7 +61,7 @@ class bnb:
         tt = getattr(self.E, 'TerminalTime')
 
         xml = root(
-            tid(self.terminal),
+            tid(self.terminal, AppVersion=self.appver),
             tt(datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
         )
 
@@ -97,7 +97,7 @@ class bnb:
         reply = self.request(
             'admin',
             [
-                self.E.GetProducts(ProductType='PAY_TOOL'),
+                self.E.GetProducts(ProductType='PAY_TOOL', GetActions='N'),
                 self.E.RequestType('GetProducts'),
                 self.E.Session(SID=self.sessid),
                 self.E.Subsystem('ClientAuth')

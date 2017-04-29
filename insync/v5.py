@@ -127,7 +127,7 @@ class client:
 
         if reply['status'] == 'TOKEN_EXPIRED':
             self.db['token'] = reply['token']
-            self.login()
+            return self.login()
 
         if reply['status'] != 'OK':
             raise InsyncException('Cant login: %s', (reply['status'],))

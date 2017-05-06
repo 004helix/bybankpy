@@ -3,4 +3,4 @@
 __title__ = 'mtb'
 __version__ = '0.0'
 
-from .xcard import xcard
+from .xcard import xcard, XCardException

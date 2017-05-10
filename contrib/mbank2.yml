@@ -1,0 +1,8 @@
+---
+interval: 120
+clientid: 12345
+deviceid: aa99bb11
+authkey: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+cards:
+ 1: 'My first card'
+ 2: 'My second card

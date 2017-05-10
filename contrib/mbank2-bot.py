@@ -5,12 +5,13 @@ from __future__ import print_function
 from datetime import datetime
 import threading
 import binascii
-import mbank2
 import time
 import yaml
 import json
 import sys
 import os
+
+import mbank2
 
 try:
     from Queue import Queue, Empty
@@ -20,6 +21,7 @@ except:
 
 mypid = os.getpid()
 state = '/dev/shm/mbank2.json'
+seqstate = os.path.expanduser('~/lib/mbank2.seq')
 with open(os.path.expanduser('~/etc/mbank2.yml'), 'r') as fd:
     conf = yaml.safe_load(fd)
 
@@ -60,19 +62,22 @@ def cmdparser(client, rqs, cmd, args):
     cardid = rqs[cmd6[0]]
     del rqs[cmd6[0]]
 
+    printlog('card', cardid, cmd6)
+
     try:
         with open(state, 'r') as fd:
-            s = json.loads(fd)
+            s = json.loads(fd.read())
     except:
         s = {}
 
     s[str(cardid)] = {
         'time': int(time.time()),
+        'name': cards[cardid],
         'args': cmd6[1:]
     }
 
     with open('{0}.{1}'.format(state, mypid), 'w') as fd:
-        fd.write(json.dumps(s), indent=4, sort_keys=True)
+        fd.write(json.dumps(s, indent=2, sort_keys=True))
 
     os.rename('{0}.{1}'.format(state, mypid), state)
 
@@ -81,8 +86,8 @@ def main():
     client = mbank2.client(clientid, deviceid, authkey)
 
     try:
-        with open(seqstate, 'r') as f:
-            client.seq = int(f.read())
+        with open(seqstate, 'r') as fd:
+            client.seq = int(fd.read())
     except:
         pass
 
@@ -100,7 +105,7 @@ def main():
         if len(rqs) > 64:
             rqs = {}  # overflow
 
-        for cardid in cards:
+        for cardid in cards.keys():
             seq = client.updatebalance(cardid)
             rqs[seq] = cardid
 

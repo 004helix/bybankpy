@@ -1,0 +1,108 @@
+diff -Nru a/smali/com/mobicon/mbank2/client/c/c.smali b/smali/com/mobicon/mbank2/client/c/c.smali
+--- a/smali/com/mobicon/mbank2/client/c/c.smali	2017-05-07 14:10:49.496057340 +0300
++++ b/smali/com/mobicon/mbank2/client/c/c.smali	2017-05-09 17:15:15.783619986 +0300
+@@ -1663,7 +1663,7 @@
+ .end method
+ 
+ .method public static c()[B
+-    .locals 1
++    .locals 2
+ 
+     .prologue
+     .line 162
+@@ -1683,6 +1683,8 @@
+     .line 164
+     :cond_0
+     sget-object v0, Lcom/mobicon/mbank2/client/c/c;->g:[B
++    const-string v1, "client.c.c deviceId : "
++    invoke-static {v1, v0}, Lcom/mobicon/mbank2/client/c/c;->Z(Ljava/lang/String;[B)V
+ 
+     return-object v0
+ .end method
+@@ -1788,7 +1790,7 @@
+ .end method
+ 
+ .method public static d()[B
+-    .locals 1
++    .locals 2
+ 
+     .prologue
+     .line 169
+@@ -1808,6 +1810,8 @@
+     .line 171
+     :cond_0
+     sget-object v0, Lcom/mobicon/mbank2/client/c/c;->f:[B
++    const-string v1, "client.c.c authKey  : "
++    invoke-static {v1, v0}, Lcom/mobicon/mbank2/client/c/c;->Z(Ljava/lang/String;[B)V
+ 
+     return-object v0
+ .end method
+@@ -2166,3 +2170,68 @@
+ 
+     goto :goto_0
+ .end method
++
++#
++# print byte array as hex Z(String prefix, byte[] bArr)
++#
++.method public static Z(Ljava/lang/String;[B)V
++    .locals 6
++
++    .prologue
++
++    # v0 - StringBuilder
++    # v1 - iterator 0 .. p1.length
++    # v2 - p1.length
++
++    new-instance v0, Ljava/lang/StringBuilder;
++    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
++    invoke-virtual {v0, p0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    move-result-object v0
++
++    array-length v2, p1
++
++    # for (v1 = 0; v1 < v2; v1++)
++    const/16 v1, 0x0
++    :goto_0
++    if-ge v1, v2, :cond_0
++
++    # v3 = p1[v1] & 0xff
++    aget-byte v3, p1, v1
++    and-int/lit16 v3, v3, 0xff
++
++    # v3 = new Integer(v3)
++    invoke-static {v3}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++    move-result-object v3
++
++    # v4 = new Object[1]
++    const/4 v4, 0x1
++    new-array v4, v4, [Ljava/lang/Object;
++
++    # v5 = 0
++    const/4 v5, 0x0
++
++    # v4[v5] = v3
++    aput-object v3, v4, v5
++
++    # v3 = String->format("%02x", v4)
++    const-string v3, "%02x"
++    invoke-static {v3, v4}, Ljava/lang/String;->format(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
++    move-result-object v3
++
++    # v0->append(v3)
++    invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
++    move-result-object v0
++
++    # v1++
++    add-int/lit16 v1, v1, 0x1
++    goto :goto_0
++
++    :cond_0
++    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
++    move-result-object v1
++
++    sget-object v0, Ljava/lang/System;->out:Ljava/io/PrintStream;
++    invoke-virtual {v0, v1}, Ljava/io/PrintStream;->println(Ljava/lang/String;)V
++
++    return-void
++.end method

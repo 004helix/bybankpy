@@ -7,7 +7,6 @@ from __future__ import print_function
 from .bits import parser, packint, packbytes, packdate
 from struct import pack, unpack
 from Crypto.Cipher import AES
-import binascii
 import random
 import socket
 import zlib
@@ -135,12 +134,6 @@ class client:
 
         return
 
-    def pprint(self, prefix, data):
-        p = binascii.hexlify(data)
-        p = [p[i:i+2].decode('utf-8') for i in range(0, len(p), 2)]
-        p = ' '.join(p)
-        print(prefix + p)
-
     # update balance request
     def updatebalance(self, cardid):
         self.seq += 1
@@ -168,7 +161,6 @@ class client:
 
         self.send(self.encrypt(self.sesskey, data))
         return seq
-        #self.pprint('==> ', data)
 
     # parse reply type 6
     def parse6(self, data):
@@ -239,3 +231,10 @@ class client:
             args = p.getbytes()
 
             return (seq, cmd, args)
+
+    #def pprint(self, prefix, data):
+    #    import binascii
+    #    p = binascii.hexlify(data)
+    #    p = [p[i:i+2].decode('utf-8') for i in range(0, len(p), 2)]
+    #    p = ' '.join(p)
+    #    print(prefix + p)

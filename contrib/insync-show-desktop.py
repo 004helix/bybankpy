@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals
-import pickle
 import sys
 import os
 
@@ -13,10 +12,14 @@ import insync
 def main():
     i = insync.client(os.path.expanduser('~/lib/insync.db'))
     i.login()
-    i.desktop()
+    d = i.desktop()
 
-    with open(os.path.expanduser('~/lib/insync.pickle'), 'wb') as fd:
-        pickle.dump(i, fd, -1)
+    for shortcut in d['shortcuts']:
+        print('------------------------------------')
+        print('    title:', shortcut['icon']['title'])
+        print('  type/id:', shortcut['objectType'], shortcut['id'])
+        if 'tagBalance' in shortcut:
+            print('  balance:', shortcut['tagBalance'])
 
 
 if __name__ == '__main__':

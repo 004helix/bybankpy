@@ -1,10 +1,12 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals
 from six.moves import dbm_gnu as gdbm, input
-
-import insync
 import uuid
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+import insync
 
 
 def main():

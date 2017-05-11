@@ -1,12 +1,15 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 from __future__ import print_function, unicode_literals
+from six.moves import input
 
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import mtb
 
 
 def main():
-    m = mtb.xcard()
+    x = mtb.xcard()
 
     print('---')
     pwd = input('Enter your new password (digits only, 8 chars: ')
@@ -15,14 +18,14 @@ def main():
 
     pan = input('Enter your x-card number: ')
     cvc = input('Enter your cvc2 code: ')
-    r = m.register(pan, cvc)
+    r = x.register(pan, cvc)
 
     # otp request
     otp = input('Enter your SMS code: ')
-    o = m.confirmotp(otp.strip())
+    o = x.confirmotp(otp.strip())
 
     # password
-    m.setpassword(pwd)
+    x.setpassword(pwd)
 
     print('Registered')
     print('---')

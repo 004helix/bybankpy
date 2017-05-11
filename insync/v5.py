@@ -49,7 +49,7 @@ class client:
         self.devid = self.db['uuid'].decode()
 
     # low-level request interface
-    def _request(self, path, payload=None, params=None):
+    def request(self, path, payload=None, params=None):
         headers = {}
 
         if payload is not None:
@@ -83,7 +83,7 @@ class client:
 
     # check device status
     def check_device_status(self):
-        reply = self._request(
+        reply = self.request(
             'CheckDeviceStatus',
             {
                 'deviceId': self.devid,
@@ -112,7 +112,7 @@ class client:
         self.sessid = device['sessionId']
 
         # perform login
-        reply = self._request(
+        reply = self.request(
             'LoginByToken',
             {
                 'deviceId':  self.devid,
@@ -137,7 +137,7 @@ class client:
 
     # def logout interface
     def logout(self):
-        return self._request('Logout')
+        return self.request('Logout')
 
     # auth interface
     def auth(self, **kwargs):
@@ -156,7 +156,7 @@ class client:
 
         request.update(kwargs)
 
-        reply = self._request(
+        reply = self.request(
             'Authorization',
             request,
             {
@@ -173,7 +173,7 @@ class client:
 
     # auth confirm interface
     def auth_confirm(self, otp):
-        reply = self._request(
+        reply = self.request(
             'AuthorizationConfirm',
             {
                 'deviceId': self.devid,
@@ -197,7 +197,7 @@ class client:
         self.db.sync()
 
     def desktop(self):
-        return self._request('Desktop', {'deviceId': self.devid})
+        return self.request('Desktop', {'deviceId': self.devid})
 
     def history(self, **kwargs):
         '''
@@ -221,41 +221,72 @@ class client:
             'searchQuery': ''
         }
         args.update(kwargs)
-        return self._request('History', args)
+        return self.request('History', args)
 
     def products(self, product):
-        return self._request('Products', {'type': product})
+        return self.request('Products', {'type': product})
 
-    def account_info(self, account_id):
-        return self._request('Account/Info', {
-            'id': account_id,
-            'operationSource': 'SIDEMENU'
+    def account_info(self, accountid, source='SIDEMENU'):
+        return self.request('Account/Info', {
+            'id': accountid,
+            'operationSource': source
         })
 
-    def deposit_info(self, deposit_id):
-        return self._request('Deposit/Info', {
-            'id': deposit_id,
-            'operationSource': 'SIDEMENU'
+    def deposit_info(self, depositid, source='SIDEMENU'):
+        return self.request('Deposit/Info', {
+            'id': depositid,
+            'operationSource': source
         })
 
-    def debit_card_info(self, debit_card_id):
-        return self._request('DebitCard/Info', {
-            'id': debit_card_id,
-            'operationSource': 'SIDEMENU'
+    def debit_card_info(self, debitcardid, source='SIDEMENU'):
+        return self.request('DebitCard/Info', {
+            'id': debitcardid,
+            'operationSource': source
         })
 
-    def credit_card_info(self, credit_card_id):
-        return self._request('CreditCard/Info', {
-            'id': credit_card_id,
-            'operationSource': 'SIDEMENU'
+    def credit_card_info(self, creditcardid, source='SIDEMENU'):
+        return self.request('CreditCard/Info', {
+            'id': creditcardid,
+            'operationSource': source
         })
+
+    def add_product_shortcut(self, type_, id_):
+        return self.request('AddProductShortcut', {
+            'type': type_,
+            'id': id_
+        })
+
+    # shortcut ids
+    def transfer(self, srcid, dstid, amount, source='DESKTOP'):
+        form = self.request('OwnTransfer/Form', {
+            'sourceId': str(srcid),
+            'destinationId': str(dstid),
+            'operationSource': source
+        })
+
+        if 'transactionId' not in form:
+            raise InsyncException('Bad form: transactionId not found')
+
+        data = self.request('OwnTransfer/Data', {
+            'transactionId': form['transactionId'],
+            'amount': amount
+        })
+
+        if 'status' not in data or \
+           not isinstance(data['status'], six.string_types):
+            raise InsyncException('Cant transfer: bad data reply')
+
+        if data['status'] != 'OK':
+            raise InsyncException('Cant transfer: %s' % (data['status'],))
+
+        return
 
     def summary(self):
         accounts = set()
         summary = {
             'accounts': [],
             'deposits': [],
-            'loans': [],
+            'loans': []
         }
 
         for account in self.products('ACCOUNT')['items']:
@@ -266,7 +297,7 @@ class client:
                 'number': account['info']['description'],
                 'description': account['info']['description'],
                 'currency': account['info']['amount']['currency'],
-                'amount': account['info']['amount']['amount'],
+                'amount': account['info']['amount']['amount']
             })
 
         for deposit in self.products('DEPOSIT')['items']:
@@ -296,7 +327,7 @@ class client:
                             'number': account['info']['description'],
                             'description': account['info']['description'],
                             'currency': account['info']['amount']['currency'],
-                            'amount': account['info']['amount']['amount'],
+                            'amount': account['info']['amount']['amount']
                         })
                         accounts.add(account['info']['description'])
                     except:

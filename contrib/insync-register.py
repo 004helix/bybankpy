@@ -30,7 +30,7 @@ def main():
 
     # Check device status
     if i.check_device_status()['status'] != 'NEW':
-        print('Device already registered')
+        print('Device already registered/inactive')
         return
 
     # Request Passport ID
@@ -42,8 +42,9 @@ def main():
     # otp request
     otp = input('Enter your SMS code: ')
 
-    # auth confirm
+    # auth confirm and logout
     i.auth_confirm(otp.strip())
+    i.logout()
 
     print('Registered')
 

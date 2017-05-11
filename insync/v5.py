@@ -250,10 +250,22 @@ class client:
             'operationSource': source
         })
 
+    # desktop shortcuts methods
     def add_product_shortcut(self, type_, id_):
         return self.request('AddProductShortcut', {
             'type': type_,
             'id': id_
+        })
+
+    def del_product_shortcut(self, type_, id_):
+        return self.request('RemoveProductShortcut', {
+            'type': type_,
+            'id': id_
+        })
+
+    def del_shortcut(self, id_):
+        return self.request('DesktopDelete', {
+            'shortcutId': id_
         })
 
     # shortcut ids

@@ -19,6 +19,8 @@ def main():
 
     print(json.dumps(i.summary(), indent=4, sort_keys=True))
 
+    i.logout()
+
 
 if __name__ == '__main__':
     main()

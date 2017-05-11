@@ -34,6 +34,8 @@ def main():
 
     i.debug = True
     i.add_product_shortcut(type_.strip(), id_.strip())
+    i.debug = False
+    i.logout()
 
 
 if __name__ == '__main__':

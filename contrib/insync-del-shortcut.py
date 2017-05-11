@@ -21,8 +21,14 @@ def main():
         if 'tagBalance' in shortcut:
             print('  balance:', shortcut['tagBalance'])
 
-    i.logout()
+    print()
 
+    id_ = input('Enter shortcut ID: ')
+
+    i.debug = True
+    i.del_shortcut(id_)
+    i.debug = False
+    i.logout()
 
 if __name__ == '__main__':
     main()

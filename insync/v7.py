@@ -25,7 +25,7 @@ class client:
 
     debug = False  # print each request/reply to stdout
 
-    url = 'https://insync.alfa-bank.by/mBank512/v6/'
+    url = 'https://insync.alfa-bank.by/mBank512/v7/'
     sess = None    # requests.session
     sessid = None  # X-Session-ID header
     devid = None   # device id (uuid)

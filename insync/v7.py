@@ -349,7 +349,7 @@ class client:
 
                 if info['accountNumber'] not in accounts:
                     try:
-                        account = self.account_info(info['accountNumber'])
+                        account = self.account_info(info['objectId'])
                         summary['accounts'].append({
                             'id': account['objectId'],
                             'title': account['info']['title'],

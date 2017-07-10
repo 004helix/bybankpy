@@ -75,6 +75,29 @@ class client:
             timeout=(30, 90)
         )
 
+        if r.status_code >= 400:
+            reason = ''
+            errmsg = ''
+
+            try:
+                reply = json.loads(r.text)
+                reason = reply['message']
+            except:
+                pass
+
+            if reason:
+                if 400 <= r.status_code < 500:
+                    errmsg = '%s Client Error: %s' % (r.status_code, reason)
+
+                elif 500 <= r.status_code < 600:
+                    errmsg = '%s Server Error: %s' % (r.status_code, reason)
+
+            if errmsg:
+                if six.PY2:
+                    errmsg = errmsg.encode('utf-8')
+
+                raise requests.HTTPError(errmsg, response=r)
+
         r.raise_for_status()
 
         if self.debug:

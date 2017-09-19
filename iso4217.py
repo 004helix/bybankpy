@@ -24,5 +24,5 @@ def num2name(num):
 def name2num(name):
     inv = { v: k for k, v in ISO4217.items() }
     if name in inv:
-        return env[name]
+        return inv[name]
     return 0

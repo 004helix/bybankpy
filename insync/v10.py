@@ -4,17 +4,29 @@
 #
 
 from __future__ import print_function, unicode_literals
+from six.moves.urllib.parse import urlparse, urlunparse
 from six.moves import dbm_gnu as gdbm
 import six
 
 from datetime import datetime
+from requests.adapters import HTTPAdapter
 import requests
-import pickle
 import json
 
 
 class InsyncException(Exception):
     pass
+
+
+class InsyncAdapter(HTTPAdapter):
+    def __init__(self, hostname, **kwargs):
+        self.__assert_hostname = hostname
+        super(InsyncAdapter, self).__attrs__.append('__assert_hostname')
+        super(InsyncAdapter, self).__init__(**kwargs)
+
+    def init_poolmanager(self, *args, **kwargs):
+        kwargs['assert_hostname'] = self.__assert_hostname
+        super(InsyncAdapter, self).init_poolmanager(*args, **kwargs)
 
 
 class client:
@@ -26,6 +38,9 @@ class client:
     debug = False  # print each request/reply to stdout
 
     url = 'https://insync.alfa-bank.by/mBank512/v10/'
+    raw = None     # raw url to use during session, i.e.
+                   # https://<ip>:<port>/mBank512/...
+
     sess = None    # requests.session
     sessid = None  # X-Session-ID header
     devid = None   # device id (uuid)
@@ -37,7 +52,10 @@ class client:
         self.__dict__.update(state)
 
     def __init__(self, insyncdb_filename):
+        url = urlparse(self.url)
         self.sess = requests.session()
+        self.sess.mount(url.scheme + '://',
+                        InsyncAdapter(url.hostname))
         self.sess.headers['User-Agent'] = self.agent
         self.sess.headers['X-Client-App'] = self.appname
 
@@ -69,14 +87,33 @@ class client:
                 print('REQUEST: .../%s %s' %
                       (path, json.dumps(payload, indent=4)))
 
+        if self.raw is None:
+            url = self.url + path
+            stream = True
+        else:
+            url = self.raw + path
+            stream = False
+
         r = self.sess.request(
-            'GET' if payload is None else 'POST',
-            self.url + path,
+            'GET' if payload is None else 'POST', url,
             json=payload,
             params=params,
             headers=headers,
-            timeout=(30, 90)
+            timeout=(30, 90),
+            stream=stream
         )
+
+        if self.raw is None:
+            peer = r.raw._connection.sock.getpeername()
+            url = urlparse(self.url)
+            raw = url._replace(netloc='{0}:{1}'.format(peer[0], peer[1]))
+            self.raw = urlunparse(raw)
+            # read server reply (stream=True)
+            r.content
+            # change cookies domain
+            for cookie in iter(self.sess.cookies):
+                if cookie.domain == url.hostname:
+                    cookie.domain = raw.hostname
 
         if r.status_code >= 400:
             reason = ''
@@ -129,7 +166,8 @@ class client:
 
     # login interface
     def login(self):
-        assert self.token is not None, 'Empty token (please register before login)'
+        assert self.token is not None, \
+            'Empty token (please register before login)'
 
         # check device status (retrieve session id)
         self.sessid = None
@@ -167,7 +205,10 @@ class client:
 
     # def logout interface
     def logout(self):
-        return self.request('Logout')
+        r = self.request('Logout')
+        self.sess = None
+        self.raw = None
+        return r
 
     # auth interface
     def auth(self, **kwargs):

@@ -21,7 +21,7 @@ class InsyncException(Exception):
 class InsyncAdapter(HTTPAdapter):
     def __init__(self, hostname, **kwargs):
         self._assert_hostname = hostname
-        super(InsyncAdapter, self).__attrs__.append('_assert_hostname')
+        self.__attrs__.extend([b'_assert_hostname', b'__attrs__'])
         super(InsyncAdapter, self).__init__(**kwargs)
 
     def init_poolmanager(self, *args, **kwargs):

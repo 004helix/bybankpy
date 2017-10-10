@@ -20,7 +20,7 @@ class history:
     def __init__(self, client, historydb_filename):
         self.db = gdbm.open(historydb_filename, 'c')
         self.insync = client
-        if b'icons' in self.db:
+        if six.b('icons') in self.db:
             self.icons = json.loads(self.db['icons'].decode())
         else:
             self.icons = {}
@@ -229,7 +229,7 @@ class history:
         if self.__key is not None:
             yield json.loads(self.db[self.__key].decode())
             while self.__key is not None:
-                if self.__key == b'icons':
+                if self.__key == six.b('icons'):
                     self.__key = self.db.nextkey(self.__key)
                     continue
                 data = json.loads(self.db[self.__key].decode())

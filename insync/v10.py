@@ -45,7 +45,7 @@ class client:
         db = gdbm.open(self.dbfile, 'w')
 
         self.devid = db['uuid'].decode()
-        if 'token' in db:
+        if b'token' in db:
             self.token = db['token'].decode()
         else:
             self.token = None

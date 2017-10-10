@@ -129,7 +129,7 @@ class client:
 
     # login interface
     def login(self):
-        assert self.token is None, 'Empty token (please register before login)'
+        assert self.token is not None, 'Empty token (please register before login)'
 
         # check device status (retrieve session id)
         self.sessid = None

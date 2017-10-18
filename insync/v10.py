@@ -10,7 +10,9 @@ import six
 
 from datetime import datetime
 from requests.adapters import HTTPAdapter
+from requests.exceptions import ConnectionError
 import requests
+import errno
 import json
 
 
@@ -205,10 +207,30 @@ class client:
 
     # def logout interface
     def logout(self):
-        r = self.request('Logout')
+        try:
+            self.request('Logout')
+        except ConnectionError as e:
+            # find IOError exception in arguments
+            ioerror = None
+            exception = e
+            while ioerror is None and exception is not None:
+                args = exception.args
+                exception = None
+                for arg in args:
+                    if isinstance(arg, IOError) and arg.errno is not None:
+                        ioerror = arg
+                        break
+                    if isinstance(arg, Exception):
+                        exception = arg
+                        break
+
+            # ignore exception if connection was reset by peer
+            if ioerror is None or ioerror.errno != errno.ECONNRESET:
+                raise
+
         self.sess = None
         self.raw = None
-        return r
+        return
 
     # auth interface
     def auth(self, **kwargs):

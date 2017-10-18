@@ -74,36 +74,41 @@ class client:
 
     # low-level request interface
     def request(self, path, payload=None, params=None):
-        headers = {}
+        kwargs = {}
+        kwargs['headers'] = {}
 
         if payload is not None:
-            headers['Content-Type'] = 'application/json; charset=UTF-8'
+            kwargs['headers']['Content-Type'] = \
+                'application/json; charset=UTF-8'
 
         if self.sessid is not None:
-            headers['X-Session-ID'] = self.sessid
+            kwargs['headers']['X-Session-ID'] = self.sessid
 
         if self.debug:
-            if payload is None:
-                print('REQUEST: .../%s' % (path,))
-            else:
+            if payload is not None:
                 print('REQUEST: .../%s %s' %
                       (path, json.dumps(payload, indent=4)))
+            else:
+                print('REQUEST: .../%s' % (path,))
+
+        if payload is not None:
+            method = 'POST'
+            kwargs['json'] = payload
+        else:
+            method = 'GET'
 
         if self.raw is None:
             url = self.url + path
-            stream = True
+            kwargs['stream'] = True
         else:
             url = self.raw + path
-            stream = False
 
-        r = self.sess.request(
-            'GET' if payload is None else 'POST', url,
-            json=payload,
-            params=params,
-            headers=headers,
-            timeout=(30, 90),
-            stream=stream
-        )
+        if params is not None:
+            kwargs['params'] = params
+
+        kwargs['timeout'] = (30, 90)
+
+        r = self.sess.request(method, url, **kwargs)
 
         if self.raw is None:
             peer = r.raw._connection.sock.getpeername()

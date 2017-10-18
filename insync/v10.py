@@ -10,7 +10,6 @@ import six
 
 from datetime import datetime
 from requests.adapters import HTTPAdapter
-from requests.exceptions import ConnectionError
 import requests
 import errno
 import json
@@ -214,7 +213,7 @@ class client:
     def logout(self):
         try:
             self.request('Logout')
-        except ConnectionError as e:
+        except requests.ConnectionError as e:
             # find IOError exception in arguments
             ioerror = None
             exception = e

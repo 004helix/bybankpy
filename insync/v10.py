@@ -110,16 +110,18 @@ class client:
         r = self.sess.request(method, url, **kwargs)
 
         if self.raw is None:
-            peer = r.raw._connection.sock.getpeername()
-            url = urlparse(self.url)
-            raw = url._replace(netloc='{0}:{1}'.format(peer[0], peer[1]))
-            self.raw = urlunparse(raw)
+            sock = getattr(r.raw._connection, 'sock', None)
+            if sock is not None:
+                peer = sock.getpeername()
+                url = urlparse(self.url)
+                raw = url._replace(netloc='{0}:{1}'.format(peer[0], peer[1]))
+                self.raw = urlunparse(raw)
+                # change cookies domain
+                for cookie in iter(self.sess.cookies):
+                    if cookie.domain == url.hostname:
+                        cookie.domain = raw.hostname
             # read server reply (stream=True)
             r.content
-            # change cookies domain
-            for cookie in iter(self.sess.cookies):
-                if cookie.domain == url.hostname:
-                    cookie.domain = raw.hostname
 
         if r.status_code >= 400:
             reason = ''

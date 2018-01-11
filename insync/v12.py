@@ -33,12 +33,12 @@ class InsyncAdapter(HTTPAdapter):
 class client:
     lang = 'en'
     devname = 'Android (insync.by py api)'
-    appname = 'Android/4.0.1'
+    appname = 'Android/4.3.0'
     agent = 'okhttp/3.8.1'
 
     debug = False  # print each request/reply to stdout
 
-    url = 'https://insync.alfa-bank.by/mBank512/v10/'
+    url = 'https://insync.alfa-bank.by/mBank512/v12/'
     raw = None     # raw url to use during session, i.e.
                    # https://<ip>:<port>/mBank512/...
 
@@ -350,6 +350,15 @@ class client:
             'id': creditcardid,
             'operationSource': source
         })
+
+    def statement_show(self, date_from, date_to, objid, type_='ACCOUNT'):
+        reply = self.request('Statement/Show', {
+            'dateFrom': date_from,
+            'dateTo': date_to,
+            'objectId': objid,
+            'type': type_
+        })
+        return reply['text']
 
     # performance logging
     # rq: DESKTOP_LOAD

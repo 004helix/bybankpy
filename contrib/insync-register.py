@@ -46,6 +46,8 @@ def main():
     i.auth_confirm(otp.strip())
     i.logout()
 
+    os.chmod(path, 0600)
+
     print('Registered')
 
 

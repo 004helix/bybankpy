@@ -15,7 +15,7 @@ def main():
     print('---')
     path = input('Enter path to insync.db: ')
 
-    db = gdbm.open(path, 'c')
+    db = gdbm.open(path, 'c', 0o600)
 
     if b'uuid' in db or b'token' in db:
         print('Device uuid already exists')
@@ -45,8 +45,6 @@ def main():
     # auth confirm and logout
     i.auth_confirm(otp.strip())
     i.logout()
-
-    os.chmod(path, 0600)
 
     print('Registered')
 

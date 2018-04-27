@@ -33,7 +33,7 @@ class InsyncAdapter(HTTPAdapter):
 class client:
     lang = 'en'
     devname = 'Android (insync.by py api)'
-    appname = 'Android/4.6.1'
+    appname = 'Android/4.6.2'
     agent = 'okhttp/3.8.1'
 
     debug = False  # print each request/reply to stdout

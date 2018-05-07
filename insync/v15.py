@@ -33,12 +33,12 @@ class InsyncAdapter(HTTPAdapter):
 class client:
     lang = 'en'
     devname = 'Android (insync.by py api)'
-    appname = 'Android/4.6.0'
-    agent = 'okhttp/3.8.1'
+    appname = 'Android/4.7.2'
+    agent = 'okhttp/3.10.0'
 
     debug = False  # print each request/reply to stdout
 
-    url = 'https://insync.alfa-bank.by/mBank512/v13/'
+    url = 'https://insync.alfa-bank.by/mBank512/v15/'
     raw = None     # raw url to use during session, i.e.
                    # https://<ip>:<port>/mBank512/...
 
@@ -307,7 +307,11 @@ class client:
             minAmount: int,
             maxDate: string (20170422134511)
             minDate: string (20150422134511)
-            transactionType: string
+            direction: enum/string:
+              EXPENSE
+              INCOME
+              ALL
+            transactionType: enum/string
               cd - Terminal operations
               tr - Transfers
               cv - Currency exchange
@@ -319,7 +323,8 @@ class client:
         args = {
             'offset': 0,
             'pageSize': 15,
-            'searchQuery': ''
+            'searchQuery': '',
+            'direction': 'ALL'
         }
         args.update(kwargs)
         return self.request('History', args)

@@ -73,15 +73,12 @@ class history:
         if 'operation' in item:
             operation = item['operation']
 
-            if operation == 'OWNACCOUNTSTRANSFER':
-                return self.assoc_icon(item, 'tr')
-            if operation == 'CREDITCARDTRANSFER':
-                return self.assoc_icon(item, 'tr')
-            if operation == 'CREDITTRANSFER':
-                return self.assoc_icon(item, 'tr')
-            if operation == 'DEPOSITTRANSFER':
-                return self.assoc_icon(item, 'tr')
-            if operation == 'PERSONTRANSFERABB':
+            if operation in ('OWNACCOUNTSTRANSFER',
+                             'CREDITCARDTRANSFER',
+                             'CREDITTRANSFER',
+                             'DEPOSITTRANSFER',
+                             'PERSONTRANSFERABB',
+                             'COMPANYTRANSFER'):
                 return self.assoc_icon(item, 'tr')
 
             if operation == 'CURRENCYEXCHANGE':
@@ -125,7 +122,6 @@ class history:
         maxdate = maxdate - timedelta(seconds=1)
 
         # search item using transactionType filters
-        amount = self.get_amount(item)
         for tt in ('cd', 'tr', 'cv', 'at', 'fe', 'ch', 'er'):
             args = {
                 'offset': 0,

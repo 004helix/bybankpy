@@ -14,18 +14,18 @@ class MMBankException(Exception):
 
 
 class client:
-    agent = 'okhttp/3.9.1'
+    agent = 'OkHttp Headers.java'
 
     debug = False  # print each request/reply to stdout
 
     url = 'https://ib.mmbank.by/services/v2/'
     sess = None  # requests.session
     sessid = None  # session token
-    appid = '1.33'
+    appid = '1.34'
     browser = 'Android'
     browser_version = 'Google Nexus 7 (Android)'
     platform = 'Android'
-    platform_version = '5.1'
+    platform_version = '9'
 
     def __getstate__(self):
         return self.__dict__.copy()

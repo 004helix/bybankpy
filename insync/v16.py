@@ -33,12 +33,12 @@ class InsyncAdapter(HTTPAdapter):
 class client:
     lang = 'en'
     devname = 'Android (insync.by py api)'
-    appname = 'Android/4.6.2'
-    agent = 'okhttp/3.8.1'
+    appname = 'Android/4.8.0'
+    agent = 'okhttp/3.10.0'
 
     debug = False  # print each request/reply to stdout
 
-    url = 'https://insync.alfa-bank.by/mBank512/v14/'
+    url = 'https://insync.alfa-bank.by/mBank512/v16/'
     raw = None     # raw url to use during session, i.e.
                    # https://<ip>:<port>/mBank512/...
 

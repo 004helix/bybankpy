@@ -50,8 +50,7 @@ class history:
         md5.update(amount[1].encode('utf-8'))  # currency
         md5.update(item['date'].encode('utf-8'))  # operation date
         md5.update(item['description'].encode('utf-8'))  # merchant
-        if 'description' in item['info']:
-            md5.update(item['info']['description'].encode('utf-8'))  # account
+        md5.update(item['info']['iban'].encode('utf-8'))  # account
 
         return md5.hexdigest()
 
@@ -186,12 +185,12 @@ class history:
 
         while True:
             hist = self.insync.history(**args)
-            args['minAmount'] = hist['minAmount']
-            args['maxAmount'] = hist['maxAmount']
-            args['offset'] += args['pageSize']
-
             if len(hist['items']) == 0:
-                break
+                hist = self.insync.history(**args)
+                if len(hist['items']) == 0:
+                    break
+
+            args['offset'] += len(hist['items'])
 
             for item in hist['items']:
                 self.save(item)

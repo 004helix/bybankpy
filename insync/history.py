@@ -43,14 +43,17 @@ class history:
         return ('%.02f' % (amount['amount'],), amount['currency'])
 
     def get_key(self, item):
-        amount = self.get_amount(item)
-
         md5 = hashlib.md5()
-        md5.update(amount[0].encode('utf-8'))  # amount
-        md5.update(amount[1].encode('utf-8'))  # currency
-        md5.update(item['date'].encode('utf-8'))  # operation date
-        md5.update(item['description'].encode('utf-8'))  # merchant
-        md5.update(item['info']['iban'].encode('utf-8'))  # account
+
+        if 'id' in item:
+            md5.update(item['id'])
+        else:
+            amount = self.get_amount(item)
+            md5.update(amount[0].encode('utf-8'))  # amount
+            md5.update(amount[1].encode('utf-8'))  # currency
+            md5.update(item['date'].encode('utf-8'))  # operation date
+            md5.update(item['description'].encode('utf-8'))  # merchant
+            md5.update(item['iban'].encode('utf-8'))  # account
 
         return md5.hexdigest()
 

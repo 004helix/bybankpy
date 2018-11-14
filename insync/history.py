@@ -59,10 +59,14 @@ class history:
         icon = item['info']['icon']['iconUrl']
         if icon in self.icons:
             if self.icons[icon] != transaction_type:
-                raise InsyncHistoryException(
-                    'Icon "%s" already used by transaction type "%s"'
-                    % (icon, self.icons[icon])
-                )
+                if self.icons[icon] != '00':
+                    raise InsyncHistoryException(
+                        'Icon "%s" already used by transaction type "%s"'
+                        % (icon, self.icons[icon])
+                    )
+                else:
+                    self.icons[icon] = transaction_type
+                    self.db['icons'] = json.dumps(self.icons)
         else:
             self.icons[icon] = transaction_type
             self.db['icons'] = json.dumps(self.icons)

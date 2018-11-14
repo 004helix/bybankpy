@@ -43,14 +43,17 @@ class history:
         return ('%.02f' % (amount['amount'],), amount['currency'])
 
     def get_key(self, item):
-        amount = self.get_amount(item)
-
         md5 = hashlib.md5()
-        md5.update(amount[0].encode('utf-8'))  # amount
-        md5.update(amount[1].encode('utf-8'))  # currency
-        md5.update(item['date'].encode('utf-8'))  # operation date
-        md5.update(item['description'].encode('utf-8'))  # merchant
-        md5.update(item['info']['description'].encode('utf-8'))  # account
+
+        if 'id' in item:
+            md5.update(item['id'])
+        else:
+            amount = self.get_amount(item)
+            md5.update(amount[0].encode('utf-8'))  # amount
+            md5.update(amount[1].encode('utf-8'))  # currency
+            md5.update(item['date'].encode('utf-8'))  # operation date
+            md5.update(item['description'].encode('utf-8'))  # merchant
+            md5.update(item['iban'].encode('utf-8'))  # account
 
         return md5.hexdigest()
 
@@ -58,10 +61,14 @@ class history:
         icon = item['info']['icon']['iconUrl']
         if icon in self.icons:
             if self.icons[icon] != transaction_type:
-                raise InsyncHistoryException(
-                    'Icon "%s" already used by transaction type "%s"'
-                    % (icon, self.icons[icon])
-                )
+                if self.icons[icon] != '00':
+                    raise InsyncHistoryException(
+                        'Icon "%s" already used by transaction type "%s"'
+                        % (icon, self.icons[icon])
+                    )
+                else:
+                    self.icons[icon] = transaction_type
+                    self.db['icons'] = json.dumps(self.icons)
         else:
             self.icons[icon] = transaction_type
             self.db['icons'] = json.dumps(self.icons)
@@ -181,12 +188,12 @@ class history:
 
         while True:
             hist = self.insync.history(**args)
-            args['minAmount'] = hist['minAmount']
-            args['maxAmount'] = hist['maxAmount']
-            args['offset'] += args['pageSize']
-
             if len(hist['items']) == 0:
-                break
+                hist = self.insync.history(**args)
+                if len(hist['items']) == 0:
+                    break
+
+            args['offset'] += len(hist['items'])
 
             for item in hist['items']:
                 self.save(item)
@@ -201,6 +208,7 @@ class history:
         args = {
             'offset': 0,
             'pageSize': 15,
+            'shortcutId': "",
         }
 
         stop = False

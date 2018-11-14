@@ -15,7 +15,7 @@ def main():
     i.login()
     i.desktop()
 
-    for prodtype in ('ACCOUNT', 'DEPOSIT', 'LOAN'):
+    for prodtype in ('ACCOUNT', 'DEPOSIT', 'CREDIT'):
         for item in i.products(prodtype)['items']:
             if 'onDesktop' not in item or item['onDesktop']:
                 continue

@@ -33,14 +33,14 @@ class InsyncAdapter(HTTPAdapter):
 class client:
     lang = 'en'
     devname = 'Android (insync.by py api)'
-    appname = 'Android/4.8.0'
-    agent = 'okhttp/3.10.0'
+    appname = 'Android/5.2.1.10'
+    agent = 'okhttp/3.11.0'
 
     debug = False  # print each request/reply to stdout
 
-    url = 'https://insync.alfa-bank.by/mBank512/v16/'
+    url = 'https://insync2.alfa-bank.by/mBank256/v3/'
     raw = None     # raw url to use during session, i.e.
-                   # https://<ip>:<port>/mBank512/...
+                   # https://<ip>:<port>/mBank256/...
 
     sess = None    # requests.session
     sessid = None  # X-Session-ID header
@@ -323,8 +323,7 @@ class client:
         args = {
             'offset': 0,
             'pageSize': 15,
-            'searchQuery': '',
-            'direction': 'ALL'
+            'shortcutId': ''
         }
         args.update(kwargs)
         return self.request('History', args)
@@ -332,27 +331,27 @@ class client:
     def products(self, product):
         return self.request('Products', {'type': product})
 
-    def account_info(self, accountid, source='SIDEMENU'):
+    def account_info(self, accountid, source='PRODUCT'):
         return self.request('Account/Info', {
             'id': accountid,
             'operationSource': source
         })
 
-    def deposit_info(self, depositid, source='SIDEMENU'):
+    def deposit_info(self, depositid, source='PRODUCT'):
         return self.request('Deposit/Info', {
             'id': depositid,
             'operationSource': source
         })
 
-    def debit_card_info(self, debitcardid, source='SIDEMENU'):
-        return self.request('DebitCard/Info', {
-            'id': debitcardid,
+    def loan_info(self, loanid, source='PRODUCT'):
+        return self.request('Loan/Info', {
+            'id': loanid,
             'operationSource': source
         })
 
-    def credit_card_info(self, creditcardid, source='SIDEMENU'):
-        return self.request('CreditCard/Info', {
-            'id': creditcardid,
+    def card_info(self, debitcardid, source='PRODUCT'):
+        return self.request('Card/Info', {
+            'id': debitcardid,
             'operationSource': source
         })
 
@@ -419,15 +418,6 @@ class client:
 
         return
 
-    def fxrates(self, currency='BYN', date=None):
-        if date is None:
-            date = datetime.utcnow().strftime('%Y%m%d%H%M%S')
-
-        return self.request('FXRates', {
-            'currency': currency,
-            'date': date
-        })
-
     # schedules
     def schedules_accounts(self):
         return self.request('Schedules/Accounts')
@@ -468,25 +458,28 @@ class client:
                 'due': '%s-%s-%s' % (due[0:4], due[4:6], due[6:8])
             })
 
-        for loan in self.products('LOAN')['items']:
-            if loan['type'] == 'CREDITCARD':
-                info = self.credit_card_info(loan['id'])
+        for loan in self.products('CREDIT')['items']:
+            info = self.loan_info(loan['id'])
+            summary['loans'].append({
+                'id': loan['id'],
+                'title': loan['info']['title'],
+                'number': loan['info']['description'],
+                'description': info['productName'].strip(),
+                'currency': loan['info']['amount']['currency'],
+                'amount': loan['info']['amount']['amount'],
+                'rate': info['rate']
+            })
 
-                if info['accountNumber'] not in accounts:
-                    try:
-                        account = self.account_info(info['objectId'])
-                        summary['accounts'].append({
-                            'id': account['objectId'],
-                            'title': account['info']['title'],
-                            'number': account['info']['description'],
-                            'description': account['info']['description'],
-                            'currency': account['info']['amount']['currency'],
-                            'amount': account['info']['amount']['amount']
-                        })
-                        accounts.add(account['info']['description'])
-                    except:
-                        pass
-
-            # TODO: loans ?
+            if 'accountNumber' in info and info['accountNumber'] not in accounts:
+                account = self.account_info(info['objectId'])
+                summary['accounts'].append({
+                    'id': account['objectId'],
+                    'title': account['info']['title'],
+                    'number': account['info']['description'],
+                    'description': account['info']['description'],
+                    'currency': account['info']['amount']['currency'],
+                    'amount': account['info']['amount']['amount']
+                })
+                accounts.add(account['info']['description'])
 
         return summary

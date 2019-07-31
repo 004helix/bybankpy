@@ -11,6 +11,7 @@ import six
 from datetime import datetime
 from requests.adapters import HTTPAdapter
 import requests
+import socket
 import errno
 import json
 
@@ -33,18 +34,18 @@ class InsyncAdapter(HTTPAdapter):
 class client:
     lang = 'en'
     devname = 'Android (insync.by py api)'
-    appname = 'Android/5.2.1.10'
-    agent = 'okhttp/3.11.0'
+    appname = 'Android/5.6.1'
+    agent = 'okhttp/3.12.1'
 
-    debug = False  # print each request/reply to stdout
-
-    url = 'https://insync2.alfa-bank.by/mBank256/v3/'
+    url = 'https://insync2.alfa-bank.by/mBank256/v7/'
     raw = None     # raw url to use during session, i.e.
                    # https://<ip>:<port>/mBank256/...
 
     sess = None    # requests.session
     sessid = None  # X-Session-ID header
     devid = None   # device id (uuid)
+
+    debug = False  # print each request/reply to stdout
 
     def __getstate__(self):
         return self.__dict__.copy()
@@ -54,11 +55,19 @@ class client:
 
     def __init__(self, insyncdb_filename):
         url = urlparse(self.url)
+        addr = socket.gethostbyname(url.hostname)
+        port = url.port
+        if port is None:
+            port = 443 if url.scheme == 'https' else 80
+
+        self.raw = urlunparse(
+            url._replace(netloc='{0}:{1}'.format(addr, port))
+        )
+
         self.sess = requests.session()
-        self.sess.mount(url.scheme + '://',
-                        InsyncAdapter(url.hostname))
         self.sess.headers['User-Agent'] = self.agent
         self.sess.headers['X-Client-App'] = self.appname
+        self.sess.mount(url.scheme + '://', InsyncAdapter(url.hostname))
 
         self.dbfile = insyncdb_filename
         db = gdbm.open(self.dbfile, 'w')
@@ -73,8 +82,7 @@ class client:
 
     # low-level request interface
     def request(self, path, payload=None, params=None):
-        kwargs = {}
-        kwargs['headers'] = {}
+        kwargs = { 'headers': {} }
 
         if payload is not None:
             kwargs['headers']['Content-Type'] = \
@@ -96,32 +104,12 @@ class client:
         else:
             method = 'GET'
 
-        if self.raw is None:
-            url = self.url + path
-            kwargs['stream'] = True
-        else:
-            url = self.raw + path
-
         if params is not None:
             kwargs['params'] = params
 
         kwargs['timeout'] = (30, 90)
 
-        r = self.sess.request(method, url, **kwargs)
-
-        if self.raw is None:
-            sock = getattr(r.raw._connection, 'sock', None)
-            if sock is not None:
-                peer = sock.getpeername()
-                url = urlparse(self.url)
-                raw = url._replace(netloc='{0}:{1}'.format(peer[0], peer[1]))
-                self.raw = urlunparse(raw)
-                # change cookies domain
-                for cookie in iter(self.sess.cookies):
-                    if cookie.domain == url.hostname:
-                        cookie.domain = raw.hostname
-            # read server reply (stream=True)
-            r.content
+        r = self.sess.request(method, self.raw + path, **kwargs)
 
         if r.status_code >= 400:
             reason = ''

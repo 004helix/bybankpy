@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 __title__ = 'insync'
-__version__ = 'v2.5'
+__version__ = 'v2.7'
 
-from .v5 import client, InsyncException
+from .v7 import client, InsyncException
 from .history import history, InsyncHistoryException

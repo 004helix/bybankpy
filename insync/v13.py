@@ -34,10 +34,10 @@ class InsyncAdapter(HTTPAdapter):
 class client:
     lang = 'en'
     devname = 'Android (insync.by py api)'
-    appname = 'Android/5.6.1'
-    agent = 'okhttp/3.12.1'
+    appname = 'Android/6.1.0'
+    agent = 'okhttp/3.14.4'
 
-    url = 'https://insync2.alfa-bank.by/mBank256/v7/'
+    url = 'https://insync2.alfa-bank.by/mBank256/v13/'
     raw = None     # raw url to use during session, i.e.
                    # https://<ip>:<port>/mBank256/...
 
@@ -67,6 +67,9 @@ class client:
         self.sess = requests.session()
         self.sess.headers['User-Agent'] = self.agent
         self.sess.headers['X-Client-App'] = self.appname
+        self.sess.headers['Accept-Encoding'] = 'gzip'
+        self.sess.headers['Accept'] = None
+        self.sess.headers['Host'] = url.hostname
         self.sess.mount(url.scheme + '://', InsyncAdapter(url.hostname))
 
         self.dbfile = insyncdb_filename

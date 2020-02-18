@@ -8,9 +8,11 @@ from six.moves.urllib.parse import urlparse, urlunparse
 from six.moves import dbm_gnu as gdbm
 import six
 
-from datetime import datetime
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_v1_5
 from requests.adapters import HTTPAdapter
 import requests
+import base64
 import socket
 import errno
 import json
@@ -47,6 +49,15 @@ class client:
 
     debug = False  # print each request/reply to stdout
 
+    # deviceId encryption key (RSA-2048)
+    key = ('MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArm6Tt3NaZcmHZgBXAqE5'
+           'A4MS+be76n4ObLC1PBlD5JOroH0YlX0E/lkYZMtYzGODlLSm1pR/kr0ta0sK++n5'
+           'OtH1Vz+GayQ6GZw6VdWFg0FnQQOL7p8Us/vJ98QREZ4pqQc9YCuLEuo2z0eTNu9b'
+           'TF3uC921qpUM8+l2EWTqFDJrvxa296QJz4/EewY/xgA8A8bwLpzW6jTeMpSRCE+q'
+           '4NnTojkM1jUDqzDaXCorsGmcb8XOo7DXz/8YsH3JUrs3OADIiQcIRPfUdbNDGATN'
+           'wFEF4zV+12GgICAiA4o0v6xz45/KW2BwZP7JY0P6NnYdOmWoq96gRs84FfIF47d8'
+           'WQIDAQAB')
+
     def __getstate__(self):
         return self.__dict__.copy()
 
@@ -82,6 +93,8 @@ class client:
             self.token = None
 
         db.close()
+
+        self.key = base64.b64decode(self.key)
 
     # low-level request interface
     def request(self, path, payload=None, params=None):
@@ -146,10 +159,16 @@ class client:
 
     # check device status
     def check_device_status(self):
+        # encrypt deviceId
+        cipher = PKCS1_v1_5.new(RSA.importKey(self.key))
+        ciphertext = cipher.encrypt(self.devid.encode('utf-8'))
+        deviceid = base64.b64encode(ciphertext).decode('utf-8') + "\n"
+
+        # make request
         reply = self.request(
             'CheckDeviceStatus',
             {
-                'deviceId': self.devid,
+                'deviceId': deviceid,
                 'locale': self.lang
             },
             {

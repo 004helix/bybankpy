@@ -96,6 +96,11 @@ class client:
 
         self.key = base64.b64decode(self.key)
 
+    def encrypt_device_id(self):
+        cipher = PKCS1_v1_5.new(RSA.importKey(self.key))
+        ciphertext = cipher.encrypt(self.devid.encode('utf-8'))
+        return base64.b64encode(ciphertext).decode('utf-8') + "\n"
+
     # low-level request interface
     def request(self, path, payload=None, params=None):
         kwargs = { 'headers': {} }
@@ -159,16 +164,10 @@ class client:
 
     # check device status
     def check_device_status(self):
-        # encrypt deviceId
-        cipher = PKCS1_v1_5.new(RSA.importKey(self.key))
-        ciphertext = cipher.encrypt(self.devid.encode('utf-8'))
-        deviceid = base64.b64encode(ciphertext).decode('utf-8') + "\n"
-
-        # make request
         reply = self.request(
             'CheckDeviceStatus',
             {
-                'deviceId': deviceid,
+                'deviceId': self.encrypt_device_id(),
                 'locale': self.lang
             },
             {
@@ -200,7 +199,7 @@ class client:
         reply = self.request(
             'LoginByToken',
             {
-                'deviceId':  self.devid,
+                'deviceId':  self.encrypt_device_id(),
                 'token':     self.token,
                 'tokenType': 'PIN'
             }

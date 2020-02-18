@@ -36,7 +36,7 @@ class InsyncAdapter(HTTPAdapter):
 class client:
     lang = 'en'
     devname = 'Android (insync.by py api)'
-    appname = 'Android/6.1.0'
+    appname = 'Android/6.2.0'
     agent = 'okhttp/3.14.4'
 
     url = 'https://insync2.alfa-bank.by/mBank256/v13/'
@@ -96,6 +96,7 @@ class client:
 
         self.key = base64.b64decode(self.key)
 
+    # deviceId encrypted from v2.11
     def encrypt_device_id(self):
         cipher = PKCS1_v1_5.new(RSA.importKey(self.key))
         ciphertext = cipher.encrypt(self.devid.encode('utf-8'))
@@ -252,11 +253,9 @@ class client:
         request = {
             # required fiels in options (resident)
             'isResident':   True,
-            #'login':       '',
-            #'documentNum': '',
-            #'issueDate':   '',
+            #'login':       '',  # see insync-register.py
             # auto fields
-            'deviceId':     self.devid,
+            'deviceId':     self.encrypt_device_id(),
             'deviceName':   self.devname,
             'screenHeight': 1200,
             'screenWidth':  768
@@ -284,7 +283,7 @@ class client:
         reply = self.request(
             'AuthorizationConfirm',
             {
-                'deviceId': self.devid,
+                'deviceId': self.encrypt_device_id(),
                 'tokenType': 'PIN',
                 'otp': otp
             },

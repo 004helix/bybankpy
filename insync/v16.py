@@ -8,9 +8,11 @@ from six.moves.urllib.parse import urlparse, urlunparse
 from six.moves import dbm_gnu as gdbm
 import six
 
-from datetime import datetime
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_v1_5
 from requests.adapters import HTTPAdapter
 import requests
+import base64
 import socket
 import errno
 import json
@@ -34,10 +36,10 @@ class InsyncAdapter(HTTPAdapter):
 class client:
     lang = 'en'
     devname = 'Android (insync.by py api)'
-    appname = 'Android/5.9.1'
-    agent = 'okhttp/3.12.5'
+    appname = 'Android/6.6.1'
+    agent = 'okhttp/4.7.2'
 
-    url = 'https://insync2.alfa-bank.by/mBank256/v10/'
+    url = 'https://insync2.alfa-bank.by/mBank256/v16/'
     raw = None     # raw url to use during session, i.e.
                    # https://<ip>:<port>/mBank256/...
 
@@ -46,6 +48,15 @@ class client:
     devid = None   # device id (uuid)
 
     debug = False  # print each request/reply to stdout
+
+    # deviceId encryption key (RSA-2048)
+    key = ('MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArm6Tt3NaZcmHZgBXAqE5'
+           'A4MS+be76n4ObLC1PBlD5JOroH0YlX0E/lkYZMtYzGODlLSm1pR/kr0ta0sK++n5'
+           'OtH1Vz+GayQ6GZw6VdWFg0FnQQOL7p8Us/vJ98QREZ4pqQc9YCuLEuo2z0eTNu9b'
+           'TF3uC921qpUM8+l2EWTqFDJrvxa296QJz4/EewY/xgA8A8bwLpzW6jTeMpSRCE+q'
+           '4NnTojkM1jUDqzDaXCorsGmcb8XOo7DXz/8YsH3JUrs3OADIiQcIRPfUdbNDGATN'
+           'wFEF4zV+12GgICAiA4o0v6xz45/KW2BwZP7JY0P6NnYdOmWoq96gRs84FfIF47d8'
+           'WQIDAQAB')
 
     def __getstate__(self):
         return self.__dict__.copy()
@@ -67,6 +78,7 @@ class client:
         self.sess = requests.session()
         self.sess.headers['User-Agent'] = self.agent
         self.sess.headers['X-Client-App'] = self.appname
+        self.sess.headers['X-Store-App'] = 'Google'
         self.sess.headers['Accept-Encoding'] = 'gzip'
         self.sess.headers['Accept'] = None
         self.sess.headers['Host'] = url.hostname
@@ -82,6 +94,14 @@ class client:
             self.token = None
 
         db.close()
+
+        self.key = base64.b64decode(self.key)
+
+    # deviceId encrypted from v2.11
+    def encrypt_device_id(self):
+        cipher = PKCS1_v1_5.new(RSA.importKey(self.key))
+        ciphertext = cipher.encrypt(self.devid.encode('utf-8'))
+        return base64.b64encode(ciphertext).decode('utf-8') + "\n"
 
     # low-level request interface
     def request(self, path, payload=None, params=None):
@@ -149,7 +169,7 @@ class client:
         reply = self.request(
             'CheckDeviceStatus',
             {
-                'deviceId': self.devid,
+                'deviceId': self.encrypt_device_id(),
                 'locale': self.lang
             },
             {
@@ -181,7 +201,7 @@ class client:
         reply = self.request(
             'LoginByToken',
             {
-                'deviceId':  self.devid,
+                'deviceId':  self.encrypt_device_id(),
                 'token':     self.token,
                 'tokenType': 'PIN'
             }
@@ -234,11 +254,9 @@ class client:
         request = {
             # required fiels in options (resident)
             'isResident':   True,
-            #'login':       '',
-            #'documentNum': '',
-            #'issueDate':   '',
+            #'login':       '',  # see insync-register.py
             # auto fields
-            'deviceId':     self.devid,
+            'deviceId':     self.encrypt_device_id(),
             'deviceName':   self.devname,
             'screenHeight': 1200,
             'screenWidth':  768
@@ -266,7 +284,7 @@ class client:
         reply = self.request(
             'AuthorizationConfirm',
             {
-                'deviceId': self.devid,
+                'deviceId': self.encrypt_device_id(),
                 'tokenType': 'PIN',
                 'otp': otp
             },

@@ -41,14 +41,13 @@ class client:
     agent = 'okhttp/4.9.0'
 
     url = 'https://insync2.alfa-bank.by/mBank256/v19/'
-    raw = None     # raw url to use during session, i.e.
-                   # https://<ip>:<port>/mBank256/...
+    raw = None     # raw url to use for session, i.e. https://<ip>:<port>/...
 
     sess = None    # requests.session
     sessid = None  # X-Session-ID header
     devid = None   # device id (uuid)
 
-    debug = False  # print each request/reply to stdout
+    debug = False   # print each request/reply to stdout
 
     # deviceId encryption key (RSA-2048)
     key = ('MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArm6Tt3NaZcmHZgBXAqE5'
@@ -96,20 +95,20 @@ class client:
 
         db.close()
 
-        self._key = serialization.load_der_public_key(
-            base64.b64decode(self.key),
-            backend=default_backend()
-        )
+        self._key = base64.b64decode(self.key)
 
     # deviceId encrypted from v2.11
     def encrypt_device_id(self):
+        pubkey = serialization.load_der_public_key(
+            self._key, backend=default_backend()
+        )
         plaintext = self.devid.encode('utf-8')
-        ciphertext = self._key.encrypt(plaintext, padding.PKCS1v15())
+        ciphertext = pubkey.encrypt(plaintext, padding.PKCS1v15())
         return base64.b64encode(ciphertext).decode('utf-8') + "\n"
 
     # low-level request interface
     def request(self, path, payload=None, params=None):
-        kwargs = { 'headers': {} }
+        kwargs = {'headers': {}}
 
         if payload is not None:
             kwargs['headers']['Content-Type'] = \
@@ -258,7 +257,7 @@ class client:
         request = {
             # required fiels in options (resident)
             'isResident':   True,
-            #'login':       '',  # see insync-register.py
+            # 'login':      '',  # see insync-register.py
             # auto fields
             'deviceId':     self.encrypt_device_id(),
             'deviceName':   self.devname,
@@ -483,7 +482,8 @@ class client:
                 'rate': info['rate']
             })
 
-            if 'accountNumber' in info and info['accountNumber'] not in accounts:
+            if 'accountNumber' in info and \
+               info['accountNumber'] not in accounts:
                 account = self.account_info(info['objectId'])
                 summary['accounts'].append({
                     'id': account['objectId'],

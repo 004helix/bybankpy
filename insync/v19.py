@@ -8,8 +8,9 @@ from six.moves.urllib.parse import urlparse, urlunparse
 from six.moves import dbm_gnu as gdbm
 import six
 
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_v1_5
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 from requests.adapters import HTTPAdapter
 import requests
 import base64
@@ -36,10 +37,10 @@ class InsyncAdapter(HTTPAdapter):
 class client:
     lang = 'en'
     devname = 'Android (insync.by py api)'
-    appname = 'Android/6.2.0'
-    agent = 'okhttp/3.14.4'
+    appname = 'Android/7.1.2'
+    agent = 'okhttp/4.9.0'
 
-    url = 'https://insync2.alfa-bank.by/mBank256/v13/'
+    url = 'https://insync2.alfa-bank.by/mBank256/v19/'
     raw = None     # raw url to use during session, i.e.
                    # https://<ip>:<port>/mBank256/...
 
@@ -78,6 +79,7 @@ class client:
         self.sess = requests.session()
         self.sess.headers['User-Agent'] = self.agent
         self.sess.headers['X-Client-App'] = self.appname
+        self.sess.headers['X-Store-App'] = 'Google'
         self.sess.headers['Accept-Encoding'] = 'gzip'
         self.sess.headers['Accept'] = None
         self.sess.headers['Host'] = url.hostname
@@ -94,12 +96,15 @@ class client:
 
         db.close()
 
-        self.key = base64.b64decode(self.key)
+        self._key = serialization.load_der_public_key(
+            base64.b64decode(self.key),
+            backend=default_backend()
+        )
 
     # deviceId encrypted from v2.11
     def encrypt_device_id(self):
-        cipher = PKCS1_v1_5.new(RSA.importKey(self.key))
-        ciphertext = cipher.encrypt(self.devid.encode('utf-8'))
+        plaintext = self.devid.encode('utf-8')
+        ciphertext = self._key.encrypt(plaintext, padding.PKCS1v15())
         return base64.b64encode(ciphertext).decode('utf-8') + "\n"
 
     # low-level request interface

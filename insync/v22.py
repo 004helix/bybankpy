@@ -8,8 +8,9 @@ from six.moves.urllib.parse import urlparse, urlunparse
 from six.moves import dbm_gnu as gdbm
 import six
 
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_v1_5
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 from requests.adapters import HTTPAdapter
 import requests
 import base64
@@ -36,18 +37,17 @@ class InsyncAdapter(HTTPAdapter):
 class client:
     lang = 'en'
     devname = 'Android (insync.by py api)'
-    appname = 'Android/6.6.1'
-    agent = 'okhttp/4.7.2'
+    appname = 'Android/7.4.0'
+    agent = 'okhttp/4.9.1'
 
-    url = 'https://insync2.alfa-bank.by/mBank256/v16/'
-    raw = None     # raw url to use during session, i.e.
-                   # https://<ip>:<port>/mBank256/...
+    url = 'https://insync2.alfa-bank.by/mBank256/v22/'
+    raw = None     # raw url to use for session, i.e. https://<ip>:<port>/...
 
     sess = None    # requests.session
     sessid = None  # X-Session-ID header
     devid = None   # device id (uuid)
 
-    debug = False  # print each request/reply to stdout
+    debug = False   # print each request/reply to stdout
 
     # deviceId encryption key (RSA-2048)
     key = ('MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArm6Tt3NaZcmHZgBXAqE5'
@@ -95,17 +95,20 @@ class client:
 
         db.close()
 
-        self.key = base64.b64decode(self.key)
+        self._key = base64.b64decode(self.key)
 
     # deviceId encrypted from v2.11
     def encrypt_device_id(self):
-        cipher = PKCS1_v1_5.new(RSA.importKey(self.key))
-        ciphertext = cipher.encrypt(self.devid.encode('utf-8'))
+        pubkey = serialization.load_der_public_key(
+            self._key, backend=default_backend()
+        )
+        plaintext = self.devid.encode('utf-8')
+        ciphertext = pubkey.encrypt(plaintext, padding.PKCS1v15())
         return base64.b64encode(ciphertext).decode('utf-8') + "\n"
 
     # low-level request interface
     def request(self, path, payload=None, params=None):
-        kwargs = { 'headers': {} }
+        kwargs = {'headers': {}}
 
         if payload is not None:
             kwargs['headers']['Content-Type'] = \
@@ -254,7 +257,7 @@ class client:
         request = {
             # required fiels in options (resident)
             'isResident':   True,
-            #'login':       '',  # see insync-register.py
+            # 'login':      '',  # see insync-register.py
             # auto fields
             'deviceId':     self.encrypt_device_id(),
             'deviceName':   self.devname,
@@ -479,7 +482,8 @@ class client:
                 'rate': info['rate']
             })
 
-            if 'accountNumber' in info and info['accountNumber'] not in accounts:
+            if 'accountNumber' in info and \
+               info['accountNumber'] not in accounts:
                 account = self.account_info(info['objectId'])
                 summary['accounts'].append({
                     'id': account['objectId'],

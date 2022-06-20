@@ -37,17 +37,17 @@ class InsyncAdapter(HTTPAdapter):
 class client:
     lang = 'en'
     devname = 'Android (insync.by py api)'
-    appname = 'Android/7.4.0'
+    appname = 'Android/8.5.1'
     agent = 'okhttp/4.9.1'
 
-    url = 'https://insync2.alfa-bank.by/mBank256/v22/'
+    url = 'https://insync2.alfa-bank.by/mBank256/v29/'
     raw = None     # raw url to use for session, i.e. https://<ip>:<port>/...
 
     sess = None    # requests.session
     sessid = None  # X-Session-ID header
     devid = None   # device id (uuid)
 
-    debug = False   # print each request/reply to stdout
+    debug = False  # print each request/reply to stdout
 
     # deviceId encryption key (RSA-2048)
     key = ('MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArm6Tt3NaZcmHZgBXAqE5'
